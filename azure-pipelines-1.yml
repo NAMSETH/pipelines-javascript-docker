@@ -15,6 +15,8 @@ variables:
   containerRegistry: 'tight.azurecr.io'
   dockerfilePath: '$(Build.SourcesDirectory)/app/Dockerfile'
   tag: '$(Build.BuildNumber)'
+  appServiceName: 'doshowsome'
+  resourceGroup: 'naman'
 
   # Agent VM image name
   vmImageName: 'ubuntu-latest'
@@ -29,6 +31,7 @@ stages:
       vmImage: $(vmImageName)
     steps:
     - task: Docker@2
+
       displayName: Build and push an image to container registry
       inputs:
         command: buildAndPush
@@ -37,3 +40,21 @@ stages:
         containerRegistry: $(dockerRegistryServiceConnection)
         tags: |
           $(tag)
+      
+- stage: Deploy
+  displayName: Deploy to app service
+  jobs:
+  - job: Deploy
+    displayName: Deploy
+    pool:
+      vmImage: $(vmImageName)
+    steps:  
+      - task: AzureCLI@2
+        inputs:
+          azureSubscription: 'namanserviceconnection'
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            echo "Restarting Azure App Service....."
+            az webapp restart --name $(appServiceName) --resource-group $(resourceGroup)
+
