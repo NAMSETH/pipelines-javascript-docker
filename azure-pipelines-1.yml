@@ -10,13 +10,11 @@ resources:
 
 variables:
   # Container registry service connection established during pipeline creation
-  dockerRegistryServiceConnection: '41d0fb42-9359-4cea-8d69-acf1a60a60b5'
+  dockerRegistryServiceConnection: 'ea28d6dd-3100-41df-8c61-d35dabb6ee7f'
   imageRepository: 'namsethpipelinesjavascriptdocker'
   containerRegistry: 'tight.azurecr.io'
   dockerfilePath: '$(Build.SourcesDirectory)/app/Dockerfile'
   tag: '$(Build.BuildNumber)'
-  appServiceName: 'doshowsome'
-  resourceGroup: 'naman'
 
   # Agent VM image name
   vmImageName: 'ubuntu-latest'
@@ -31,7 +29,6 @@ stages:
       vmImage: $(vmImageName)
     steps:
     - task: Docker@2
-
       displayName: Build and push an image to container registry
       inputs:
         command: buildAndPush
@@ -39,24 +36,5 @@ stages:
         dockerfile: $(dockerfilePath)
         containerRegistry: $(dockerRegistryServiceConnection)
         tags: |
-          $(tag) \
+          $(tag)
           latest
-
-      
-- stage: Deploy
-  displayName: Deploy to app service
-  jobs:
-  - job: Deploy
-    displayName: Deploy
-    pool:
-      vmImage: $(vmImageName)
-    steps:  
-      - task: AzureCLI@2
-        inputs:
-          azureSubscription: 'namanserviceconnection'
-          scriptType: 'bash'
-          scriptLocation: 'inlineScript'
-          inlineScript: |
-            echo "Restarting Azure App Service....."
-            az webapp restart --name $(appServiceName) --resource-group $(resourceGroup)
-
