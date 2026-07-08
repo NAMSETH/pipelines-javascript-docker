@@ -10,11 +10,13 @@ resources:
 
 variables:
   # Container registry service connection established during pipeline creation
+  azureServiceConnection: 'namanserviceconnection'
+  acrName: 'tight.azurecr.io'
   dockerRegistryServiceConnection: 'ea28d6dd-3100-41df-8c61-d35dabb6ee7f'
   imageRepository: 'namsethpipelinesjavascriptdocker'
   containerRegistry: 'tight.azurecr.io'
   dockerfilePath: '$(Build.SourcesDirectory)/app/Dockerfile'
-  tag: '$(Build.BuildId)'
+  tag: '$(Build.BuildNumber)'
 
   # Agent VM image name
   vmImageName: 'ubuntu-latest'
@@ -28,12 +30,16 @@ stages:
     pool:
       vmImage: $(vmImageName)
     steps:
-    - task: Docker@2
+    - task: AzureCLI@2
       displayName: Build and push an image to container registry new
       inputs:
-        command: buildAndPush
-        repository: $(imageRepository)
-        dockerfile: $(dockerfilePath)
-        containerRegistry: $(dockerRegistryServiceConnection)
-        tags: |
-          $(tag)
+        azureSubscription: $(azureServiceConnection)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          az acr login --name $(acrName) --expose-token
+          az acr build  \ 
+            --registry $(acrName) \
+            --image $(imageRepository):latest \
+            --image $(imageRepository):$(tag) \
+            --file  $(dockerfilePath) \
