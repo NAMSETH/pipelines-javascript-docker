@@ -42,4 +42,4 @@ stages:
             --registry $(acrName) \
             --image $(imageRepository):latest \
             --image $(imageRepository):$(tag) \
-            --file  $(dockerfilePath) \
+            --file  $(dockerfilePath) .
