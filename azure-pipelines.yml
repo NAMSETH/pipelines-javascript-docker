@@ -37,9 +37,9 @@ stages:
         scriptType: bash
         scriptLocation: inlineScript
         inlineScript: |
-          az acr login --name $(acrName) --expose-token
-          az acr build  \ 
-            --registry $(acrName) \
+          az acr login --name tight
+          az acr build \
+            --registry tight \
             --image $(imageRepository):latest \
             --image $(imageRepository):$(tag) \
-            --file  $(dockerfilePath) .
+            --file $(dockerfilePath) .
