@@ -1,0 +1,52 @@
+trigger: none # Disables automatic execution on code commits
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  # Using your exact existing service connection
+  dockerRegistryServiceConnection: 'ea28d6dd-3100-41df-8c61-d35dabb6ee7f'
+  
+  # Image repositories and registries
+  imageRepository: 'namsethpipelinesjavascriptdocker'
+  sourceRegistry: 'tight.azurecr.io'
+  targetRegistry: 'nonprodacr.azurecr.io'
+  imageTag: 'latest'
+
+steps:
+# Do not check out code since we are only manipulating an existing image
+- checkout: none
+
+# 1. Authenticate to the source registry
+- task: Docker@2
+  displayName: 'Login to source registry (tight)'
+  inputs:
+    command: login
+    containerRegistry: '$(dockerRegistryServiceConnection)'
+
+# 2. Pull the image locally to the pipeline agent
+- task: Bash@3
+  displayName: 'Pull latest image from source'
+  inputs:
+    targetType: 'inline'
+    script: |
+      docker pull $(sourceRegistry)/$(imageRepository):$(imageTag)
+
+# 3. Re-authenticate to the target registry 
+- task: Docker@2
+  displayName: 'Login to target registry (nonprodacr)'
+  inputs:
+    command: login
+    containerRegistry: '$(dockerRegistryServiceConnection)'
+
+# 4. Tag and push the image to nonprodacr
+- task: Bash@3
+  displayName: 'Tag and Push to nonprodacr'
+  inputs:
+    targetType: 'inline'
+    script: |
+      # Re-tag the pulled image for the new registry destination
+      docker tag $(sourceRegistry)/$(imageRepository):$(imageTag) $(targetRegistry)/$(imageRepository):$(imageTag)
+      
+      # Push it out to the target
+      docker push $(targetRegistry)/$(imageRepository):$(imageTag)
